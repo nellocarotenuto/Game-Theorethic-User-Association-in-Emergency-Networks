@@ -31,7 +31,7 @@ max_worsening = 0.5;
 distances = sqrt((center(1) - towers_table.x) .^ 2 + (center(2) - towers_table.y) .^ 2);
 towers_affected = distances <= extension;
 
-probabilities = rand(height(towers_table, 1));
+probabilities = rand(height(towers_table), 1);
 
 towers_destroyed = probabilities <= destruction_probability;
 towers_damaged = probabilities <= damage_probability;

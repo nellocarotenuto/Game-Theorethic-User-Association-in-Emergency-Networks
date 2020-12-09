@@ -18,7 +18,7 @@ worsening = zeros(height(towers_table), 1);
 min_worsening = 0;
 max_worsening = 0.5;
 
-probabilities = rand(height(towers_table, 1));
+probabilities = rand(height(towers_table), 1);
 
 towers_destroyed = probabilities <= destruction_probability;
 towers_damaged = probabilities <= damage_probability;
