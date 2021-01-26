@@ -15,8 +15,8 @@ function towers_table = manmade_disaster(destruction_probability, damage_probabi
 
 worsening = zeros(height(towers_table), 1);
 
-min_worsening = 0;
-max_worsening = 0.5;
+min_worsening = 0.20;
+max_worsening = 0.60;
 
 probabilities = rand(height(towers_table), 1);
 
@@ -26,7 +26,7 @@ towers_damaged = probabilities <= damage_probability;
 worsening(towers_damaged) = min_worsening + (max_worsening - min_worsening) .* rand(sum(towers_damaged), 1);
 worsening(towers_destroyed) = ones(sum(towers_destroyed), 1);
 
-towers_table(:, :).worsening = worsening;
+towers_table(:, :).health = 1 - worsening;
 
 end
 
