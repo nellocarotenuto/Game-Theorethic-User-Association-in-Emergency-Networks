@@ -19,11 +19,11 @@ function towers_table = tower_placement(vertex_1, vertex_2, origin, altitude, ra
 %                towers to select (LTE, UMTS, GSM, ...)
 %   mcc        : the country identifier of the network operator whose
 %                towers should be selected
-%   mnc        : the identifier of the network operator whose towers should
-%                be selected
+%   mnc        : an array of identifiers of the network operator whose
+%                towers should be selected
 % Outputs:
-%   towers_table   : a table with id, x, y, range, max_users and health
-%                    properties of the towers in the area of interest
+%   towers_table   : a table with id, x, y and health properties of the
+%                    towers in the area of interest
 
 input_fields = [["radio", "string"];
                 ["mcc", "double"];
@@ -41,28 +41,29 @@ for i = 1 : length(csv_files)
     file_towers_table = readtable(sprintf("data/%s", csv_files(i).name), ...
                                   'ReadVariableNames', true);
                         
-    file_towers_table = file_towers_table( ...
-                            file_towers_table.lat >= min(vertex_1(1), vertex_2(1)) & ...
-                            file_towers_table.lat <= max(vertex_1(1), vertex_2(1)) & ...
-                            file_towers_table.lon >= min(vertex_1(2), vertex_2(2)) & ...
-                            file_towers_table.lon <= max(vertex_1(2), vertex_2(2)), ["radio", "mcc", "net", "lat", "lon"]);
+    file_towers_table = file_towers_table(file_towers_table.lat >= min(vertex_1(1), vertex_2(1)) & ...
+                                          file_towers_table.lat <= max(vertex_1(1), vertex_2(1)) & ...
+                                          file_towers_table.lon >= min(vertex_1(2), vertex_2(2)) & ...
+                                          file_towers_table.lon <= max(vertex_1(2), vertex_2(2)), ...
+                                          ["radio", "mcc", "net", "lat", "lon"]);
     
     full_towers_table = vertcat(full_towers_table, file_towers_table);
 end
 
-towers_of_interest = ismember(full_towers_table.radio, radio) & full_towers_table.mcc == mcc & full_towers_table.net == mnc;
+towers_of_interest = ismember(full_towers_table.radio, radio) & ...
+                              full_towers_table.mcc == mcc & ...
+                              ismember(full_towers_table.net, mnc);
                     
 full_towers_table = full_towers_table(towers_of_interest, :);
 
 [x, y] = latlon2local(table2array(full_towers_table(: , "lat")), ...
-                      table2array(full_towers_table(: , "lon")), altitude, origin);
+                      table2array(full_towers_table(: , "lon")), ...
+                      altitude, origin);
 
 ids = uint16([1 : height(full_towers_table)]');
-max_users = randi([750 1250], height(full_towers_table), 1);
-utilization = zeros(height(full_towers_table), 1);
 health = ones(height(full_towers_table), 1);
 
-towers_table = table(ids, x, y, max_users, utilization, health, ...
-                     'VariableNames', ["id", "x", "y", "max_users", "utilization", "health"]);
+towers_table = table(ids, x, y, health, ...
+                     'VariableNames', ["id", "x", "y", "health"]);
 
 end
