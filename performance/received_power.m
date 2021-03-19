@@ -9,6 +9,9 @@ function received_power = received_power(transmit_power, distance)
 %   received_power   : the amount of power received by the target from the
 %                      source
 
+low_distances = distance < 10;
+distance(low_distances) = 10;
+
 received_power = transmit_power .* GAIN .* (10 ./ distance) .^ 3;
 
 end
