@@ -69,13 +69,18 @@ function scores = fitness(x, users_table, towers_table, max_uav_number, position
 %              function call 
 
 % Compute max consumed energy to use for normalization
-TOWERS_MAX_ENERGY = sum(TOWER_K1 + towers_table.health .* (TOWER_K2 + TOWER_K3 * (TOWER_MAX_TRANSMIT_POWER - TOWER_MIN_TRANSMIT_POWER)));
-UAVS_MAX_ENERGY = max_uav_number * (UAV_K1 + (UAV_K2 + UAV_K3 * (UAV_MAX_TRANSMIT_POWER - UAV_MIN_TRANSMIT_POWER)));
+base_stations_type = vertcat(repmat(TOWER_LABEL, height(towers_table), 1), ...
+                             repmat(UAV_LABEL, max_uav_number, 1));
 
-BASE_STATIONS_MAX_ENERGY = TOWERS_MAX_ENERGY + UAVS_MAX_ENERGY;
+base_stations_max_utilizations = vertcat(towers_table.health, ...
+                                         ones(max_uav_number, 1));
 
+max_consumed_energy = base_stations_consumed_energy(base_stations_type, base_stations_max_utilizations);
+
+% Preallocate scores vector
 scores = zeros(size(x, 1), 1);
 
+% Compute the score for each individual to be evaluated
 parfor i = 1 : size(x, 1)
     uavs_table = uavs_table_from_chromosome(x{i}, positions);
     
@@ -85,11 +90,8 @@ parfor i = 1 : size(x, 1)
     capex = height(uavs_table) / max_uav_number;
     
     % Compute energy used by the configuration as a percentage of the
-    % maximum
-    towers_energy = sum(TOWER_K1 + base_stations_info_table.utilization(base_stations_info_table.type == TOWER_LABEL) .* (TOWER_K2 + TOWER_K3 * (TOWER_MAX_TRANSMIT_POWER - TOWER_MIN_TRANSMIT_POWER)));
-    uavs_energy = sum(UAV_K1 + base_stations_info_table.utilization(base_stations_info_table.type == UAV_LABEL) .* (UAV_K2 + UAV_K3 * (UAV_MAX_TRANSMIT_POWER - UAV_MIN_TRANSMIT_POWER)));
-    
-    energy = (towers_energy + uavs_energy) / BASE_STATIONS_MAX_ENERGY;
+    consumed_energy = base_stations_consumed_energy(base_stations_info_table.type, base_stations_info_table.utilization);
+    energy = consumed_energy / max_consumed_energy;
     
     % Compute throughput penalty for the configuration
     violations = base_stations_info_table.health > 0 & base_stations_info_table.average_throughput < TARGET_THROUGHPUT;
@@ -100,7 +102,7 @@ parfor i = 1 : size(x, 1)
         penalty = 0;
     end
     
-    scores(i) = 0.35 * capex + 0.25 * energy + 0.40 * penalty;
+    scores(i) = 0.20 * capex + 0.40 * energy + 0.40 * penalty;
     
 end
 
